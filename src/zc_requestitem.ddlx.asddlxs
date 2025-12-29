@@ -1,0 +1,26 @@
+@Metadata.layer: #CORE
+annotate entity ZC_RequestItem with
+{
+  @UI.hidden: true
+  RequestUuid;
+
+  @UI.hidden: true  
+  ItemUuid;
+  
+  @EndUserText.label: 'Product ID'
+  @UI: { lineItem: [{ position: 10 }],
+         identification: [{ position: 10 }] }
+  ProductId;
+  
+  @EndUserText.label: 'Amount'
+  @UI: { lineItem: [{ position: 20 }],
+         identification: [{ position: 20 }] }  
+  ProductQty;
+
+  @UI.hidden: true
+  ProductUom;
+
+  @UI.hidden: true  
+  LastChangedAt;
+
+}

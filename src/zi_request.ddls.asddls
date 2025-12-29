@@ -2,7 +2,7 @@
 @EndUserText.label: 'Request interface view'
 @Metadata.ignorePropagatedAnnotations: true
 define root view entity ZI_Request
-  as select from ZRAP_A_REQUEST
+  as select from zrap_a_request
   composition [0..*] of ZI_RequestItem as _items
   association [0..1] to I_BusinessPartner as _requester on $projection.RequesterId = _requester.BusinessPartner
 {
@@ -13,6 +13,12 @@ define root view entity ZI_Request
       deadline_date   as DeadlineDate,
       requester_id    as RequesterId,
       cancel_reason   as CancelReason,
+      case status
+        when '101' then 2
+        when '102' then 3
+        when '103' then 1
+        else 0
+      end             as StatusCriticality,
       @Semantics.user.createdBy: true
       created_by      as CreatedBy,
       @Semantics.systemDateTime.createdAt: true

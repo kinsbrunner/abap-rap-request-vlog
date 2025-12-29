@@ -1,0 +1,63 @@
+@Metadata.layer: #CORE
+@UI: { headerInfo: { typeName: 'Request',
+                     typeNamePlural: 'Requests',
+                     title: { type: #STANDARD,
+                     value: 'ExternalId' } } }
+
+annotate entity ZC_Request with
+{
+
+  @UI.facet: [ { id: 'Request',
+                 purpose: #STANDARD,
+                 type: #IDENTIFICATION_REFERENCE,
+                 label: 'Request',
+                 position: 10 },
+
+               { id: 'RequestItems',
+                 purpose: #STANDARD,
+                 type: #LINEITEM_REFERENCE,
+                 label: 'Requested Products',
+                 position: 20,
+                 targetElement: '_items' } ]
+
+  @UI.adaptationHidden: true
+  RequestUuid;
+
+  @EndUserText.label: 'External ID'
+  @UI: { lineItem: [{ position: 10 }],
+         identification: [{ position: 10 }] }  
+  ExternalId;
+
+  @EndUserText.label: 'Requester ID'
+  @UI: { lineItem: [{ position: 20 }],
+         identification: [{ position: 20 }] }
+  RequesterId;
+
+  @EndUserText.label: 'Status'
+  @UI: { lineItem: [{ position: 30 }],
+         identification: [{ position: 30 }] }  
+  Status;
+
+  @UI.adaptationHidden: true
+  StatusCriticality;
+
+  @EndUserText.label: 'Priority'
+  @UI: { lineItem: [{ position: 40 }],
+         identification: [{ position: 40 }] }  
+  Priority;
+
+  @EndUserText.label: 'Deadline Date'
+  @UI: { lineItem: [{ position: 50 }],
+         identification: [{ position: 50 }] }  
+  DeadlineDate;
+
+  @EndUserText.label: 'Cacnellation Reason'
+  @UI: { lineItem: [{ position: 60 }],
+         identification: [{ position: 60 }] }  
+  CancelReason;
+
+  @EndUserText.label: 'Last Changed At'
+  @UI: { lineItem: [{ position: 70 }] }  
+  LastChangedAt;
+
+}
