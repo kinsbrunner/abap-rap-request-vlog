@@ -30,7 +30,9 @@ annotate entity ZC_Request with
 
   @EndUserText.label: 'Requester ID'
   @UI: { lineItem: [{ position: 20 }],
-         identification: [{ position: 20 }] }
+         identification: [{ position: 20 }],
+         selectionField: [{ position: 20 }],
+         textArrangement: #TEXT_ONLY }
   RequesterId;
 
   @EndUserText.label: 'Status'
@@ -51,7 +53,7 @@ annotate entity ZC_Request with
          identification: [{ position: 50 }] }  
   DeadlineDate;
 
-  @EndUserText.label: 'Cacnellation Reason'
+  @EndUserText.label: 'Cancellation Reason'
   @UI: { lineItem: [{ position: 60 }],
          identification: [{ position: 60 }] }  
   CancelReason;
