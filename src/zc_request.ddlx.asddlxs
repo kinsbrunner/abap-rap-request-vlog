@@ -37,7 +37,9 @@ annotate entity ZC_Request with
 
   @EndUserText.label: 'Status'
   @UI: { lineItem: [{ position: 30 }],
-         identification: [{ position: 30 }] }  
+         identification: [{ position: 30 }], 
+         selectionField: [{ position: 30 }],
+         textArrangement: #TEXT_FIRST }  
   Status;
 
   @UI.adaptationHidden: true
@@ -45,7 +47,9 @@ annotate entity ZC_Request with
 
   @EndUserText.label: 'Priority'
   @UI: { lineItem: [{ position: 40 }],
-         identification: [{ position: 40 }] }  
+         identification: [{ position: 40 }],
+         textArrangement: #TEXT_ONLY,
+         selectionField: [{ position: 40 }] }  
   Priority;
 
   @EndUserText.label: 'Deadline Date'

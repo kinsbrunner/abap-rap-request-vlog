@@ -17,10 +17,19 @@ define root view entity ZC_Request
       RequesterId,
       _requester.BusinessPartnerName as RequesterName,
       @Search.defaultSearchElement: true
+      @ObjectModel.text.element: [ 'StatusText' ]
+      @Consumption.valueHelpDefinition: [{ entity: { name: 'ZI_Status_VH',
+                                                     element: 'StatusCode' } }]
       Status,
-      StatusCriticality,      
+      _status.StatusText             as StatusText,
+      StatusCriticality,
       @Search.defaultSearchElement: true
+      @ObjectModel.text.element: [ 'PriorityText' ]
+      @Consumption.valueHelpDefinition: [{ entity: { name: 'ZI_Priority_VH',
+                                                     element: 'PriorityCode' } }]
+      @Consumption.filter.selectionType: #SINGLE
       Priority,
+      _priority.PriorityText         as PriorityText,
       DeadlineDate,
       CancelReason,
       LastChangedAt,
