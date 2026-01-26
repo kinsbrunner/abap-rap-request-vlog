@@ -7,6 +7,10 @@ CLASS lhc_Request DEFINITION INHERITING FROM cl_abap_behavior_handler.
       IMPORTING keys FOR request~set_semantic_key.
     METHODS check_semantic_key FOR VALIDATE ON SAVE
       IMPORTING keys FOR request~check_semantic_key.
+    METHODS check_mandatory_fields FOR VALIDATE ON SAVE
+      IMPORTING keys FOR request~check_mandatory_fields.
+    METHODS check_deadline_date FOR VALIDATE ON SAVE
+      IMPORTING keys FOR request~check_deadline_date.
 
 ENDCLASS.
 
@@ -62,6 +66,84 @@ CLASS lhc_Request IMPLEMENTATION.
                                            number   = '002'
                                            severity = if_abap_behv_message=>severity-error
                                            v1       = ls_duplicate-ExternalId ) ) INTO TABLE reported-request.
+    ENDLOOP.
+  ENDMETHOD.
+
+  METHOD check_mandatory_fields.
+    DATA permission_request TYPE STRUCTURE FOR PERMISSIONS REQUEST zi_request.
+    DATA reported_zi_request_li LIKE LINE OF reported-request.
+
+    DATA(description_permission_request) = CAST cl_abap_structdescr( cl_abap_typedescr=>describe_by_data_ref( REF #( permission_request-%field ) ) ).
+    DATA(components_permission_request) = description_permission_request->get_components( ).
+
+    LOOP AT components_permission_request INTO DATA(component_permission_Request).
+      permission_request-%field-(component_permission_request-name) = if_abap_behv=>mk-on.
+    ENDLOOP.
+
+    " Get current field values
+    READ ENTITIES OF ZI_Request IN LOCAL MODE
+    ENTITY Request
+      ALL FIELDS
+      WITH CORRESPONDING #( keys )
+      RESULT DATA(lt_requests).
+
+    LOOP AT lt_requests INTO DATA(ls_request).
+
+      GET PERMISSIONS ONLY INSTANCE FEATURES ENTITY ZI_Request
+        FROM VALUE #( ( RequestUuid = ls_request-RequestUuid ) )
+        REQUEST permission_request
+        RESULT DATA(permission_result)
+        FAILED DATA(failed_permission_result)
+        REPORTED DATA(reported_permission_result).
+
+      LOOP AT components_permission_request INTO component_permission_request.
+        " Permission result for instances (field ( features : instance ) CancelReason;) is stored in an internal table.
+        " So we have to retrieve the information for the current entity
+        "  whereas the global information ( field ( mandatory ) DeadlineDate; ) is stored in a structure.
+
+        IF permission_result-global-%field-(component_permission_request-name) = if_abap_behv=>fc-f-mandatory AND
+           ls_request-(component_permission_request-name) IS INITIAL.
+
+          APPEND VALUE #( %tky = ls_request-%tky ) TO failed-request.
+
+          " Since %element-(component_permission_request-name) = if_abap_behv=>mk-on could not be added using a VALUE statement
+          "  add the value via assigning value to the field of a structure
+
+          CLEAR reported_zi_request_li.
+          reported_zi_request_li-%tky = ls_request-%tky.
+          reported_zi_request_li-%element-(component_permission_Request-name) = if_abap_behv=>mk-on.
+          reported_zi_request_li-%msg = new_message( id = 'ZMSG_REQUEST'
+                                                         number = 001
+                                                         severity = if_Abap_behv_message=>severity-error
+                                                         v1 = |{ component_permission_request-name }|
+                                                         v2 = |{ ls_request-ExternalId }| ).
+
+          APPEND reported_zi_request_li TO reported-request.
+
+        ENDIF.
+      ENDLOOP.
+    ENDLOOP.
+  ENDMETHOD.
+
+  METHOD check_deadline_date.
+    READ ENTITIES OF ZI_Request IN LOCAL MODE
+      ENTITY Request
+      FIELDS ( DeadlineDate )
+      WITH CORRESPONDING #( keys )
+      RESULT DATA(lt_requests).
+
+    DATA lv_min_date  TYPE d.
+    lv_min_date = sy-datum + 1.
+
+    LOOP AT lt_requests INTO DATA(ls_request).
+      IF ls_request-DeadlineDate < lv_min_date.
+        INSERT VALUE #( RequestUuid = ls_request-RequestUuid ) INTO TABLE failed-request.
+        INSERT VALUE #( RequestUuid = ls_request-RequestUuid
+                        %msg        = new_message( id       = 'ZMSG_REQUEST'
+                                                   number   = '003'
+                                                   severity = if_abap_behv_message=>severity-error
+                                                   v1       = ls_request-DeadlineDate ) ) INTO TABLE reported-request.
+      ENDIF.
     ENDLOOP.
   ENDMETHOD.
 
