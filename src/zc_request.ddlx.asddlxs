@@ -46,16 +46,18 @@ annotate entity ZC_Request with
   RequesterId;
 
   @EndUserText.label: 'Status'
-  @UI: { lineItem: [{ position: 30,
-         criticality: 'StatusCriticality',
-         criticalityRepresentation: #WITHOUT_ICON }],
-         identification: [{ qualifier: 'Main',
+  @UI: { identification: [{ qualifier: 'Main',
                             position: 30,
                             criticality: 'StatusCriticality',
-                            criticalityRepresentation: #WITH_ICON }], 
+                            criticalityRepresentation: #WITH_ICON }] }  
+  Status;
+
+  @UI: { lineItem: [{ position: 30,
+         criticality: 'StatusCriticality',
+         criticalityRepresentation: #WITHOUT_ICON }], 
          selectionField: [{ position: 30 }],
          textArrangement: #TEXT_FIRST }  
-  Status;
+  StatusFilter;
 
   @UI.adaptationHidden: true
   StatusCriticality;

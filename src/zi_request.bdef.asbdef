@@ -24,10 +24,12 @@ etag master LastChangedAt
   validation check_mandatory_fields on save { create; update; }
   validation check_deadline_date on save { field DeadlineDate; }
   determination set_priority on modify { field DeadlineDate; }
+  determination set_initial_status on modify { create; }
 
   field ( readonly ) RequestUuid, ExternalId;
   field ( numbering : managed ) RequestUuid;
   field ( mandatory ) RequesterId, DeadlineDate;
+  field ( features : instance ) Status;
 
   association _items { create; with draft; }
 

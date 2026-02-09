@@ -13,6 +13,10 @@ CLASS lhc_Request DEFINITION INHERITING FROM cl_abap_behavior_handler.
       IMPORTING keys FOR request~check_deadline_date.
     METHODS set_priority FOR DETERMINE ON MODIFY
       IMPORTING keys FOR request~set_priority.
+    METHODS set_initial_status FOR DETERMINE ON MODIFY
+      IMPORTING keys FOR request~set_initial_status.
+    METHODS get_instance_features FOR INSTANCE FEATURES
+      IMPORTING keys REQUEST requested_features FOR request RESULT result.
 
 ENDCLASS.
 
@@ -166,6 +170,36 @@ CLASS lhc_Request IMPLEMENTATION.
                                        WHEN ls_request-DeadlineDate - sy-datum < 7 THEN 2
                                        ELSE 3 ) ) )
     REPORTED DATA(ls_result).
+  ENDMETHOD.
+
+  METHOD set_initial_status.
+    MODIFY ENTITIES OF ZI_Request IN LOCAL MODE
+      ENTITY Request
+      UPDATE
+      FIELDS ( Status )
+      WITH VALUE #( FOR ls_key IN keys
+                    ( %key = ls_key-%key
+                      Status = 100 ) )
+      REPORTED DATA(ls_result).
+  ENDMETHOD.
+
+  METHOD get_instance_features.
+    " Get the root node. In a Fiori Elements UI this will be just one entry. But, when being called via EML or as an API,
+    "  several instances of Request can be requested.
+    READ ENTITIES OF ZI_Request IN LOCAL MODE
+      ENTITY Request
+      ALL FIELDS
+      WITH CORRESPONDING #( keys )
+      RESULT DATA(lt_requests).
+
+    " Loop the nodes and set the Mandatory field either to read-only or mandatory based on the
+    "  value of Status field
+    LOOP AT lt_requests INTO DATA(ls_request).
+      APPEND VALUE #( %tky = ls_request-%tky
+                      %field-Status       = COND #( WHEN ls_request-ExternalId IS INITIAL
+                                                    THEN if_abap_behv=>fc-f-read_only
+                                                    ELSE if_abap_behv=>fc-f-unrestricted ) ) TO result.
+    ENDLOOP.
   ENDMETHOD.
 
 ENDCLASS.

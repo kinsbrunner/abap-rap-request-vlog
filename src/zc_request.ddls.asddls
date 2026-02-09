@@ -19,9 +19,13 @@ define root view entity ZC_Request
       _requester.BusinessPartnerName as RequesterName,
       @Search.defaultSearchElement: true
       @ObjectModel.text.element: [ 'StatusText' ]
-      @Consumption.valueHelpDefinition: [{ entity: { name: 'ZI_Status_VH',
+      @Consumption.valueHelpDefinition: [{ entity: { name: 'ZI_Status_Edit_VH',
                                                      element: 'StatusCode' } }]
       Status,
+      @ObjectModel.text.element: [ 'StatusText' ]
+      @Consumption.valueHelpDefinition: [{ entity: { name: 'ZI_Status_VH',
+                                                     element: 'StatusCode' } }]
+      Status                         as StatusFilter,
       _status.StatusText             as StatusText,
       StatusCriticality,
       @Search.defaultSearchElement: true
