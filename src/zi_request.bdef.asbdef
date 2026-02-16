@@ -25,11 +25,18 @@ etag master LastChangedAt
   validation check_deadline_date on save { field DeadlineDate; }
   determination set_priority on modify { field DeadlineDate; }
   determination set_initial_status on modify { create; }
+  action cancel_request parameter ZP_Popup;
 
   field ( readonly ) RequestUuid, ExternalId;
   field ( numbering : managed ) RequestUuid;
   field ( mandatory ) RequesterId, DeadlineDate;
   field ( features : instance ) Status;
+
+  side effects {
+    // This is for refreshing after Cancel Request action
+    action cancel_Request affects $self;
+
+  }
 
   association _items { create; with draft; }
 
