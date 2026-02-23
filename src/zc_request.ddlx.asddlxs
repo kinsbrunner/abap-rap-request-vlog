@@ -12,15 +12,7 @@ annotate entity ZC_Request with
                  purpose: #STANDARD,
                  type: #IDENTIFICATION_REFERENCE,
                  label: 'Request',
-                 position: 10,
-                 targetQualifier: 'Main' },
-
-               { id: 'ReqCancel',
-                 purpose: #STANDARD,
-                 type: #FIELDGROUP_REFERENCE,
-                 label: 'Cancellation Reason',
-                 position: 15,
-                 targetQualifier: 'Cancel' },
+                 position: 10 },
 
                { id: 'RequestItems',
                  purpose: #STANDARD,
@@ -45,15 +37,13 @@ annotate entity ZC_Request with
 
   @EndUserText.label: 'Requester ID'
   @UI: { lineItem: [{ position: 20 }],
-         identification: [{ position: 20,
-                            qualifier: 'Main' }],
+         identification: [{ position: 20 }],
          selectionField: [{ position: 20 }],
          textArrangement: #TEXT_ONLY }
   RequesterId;
 
   @EndUserText.label: 'Status'
-  @UI: { identification: [{ qualifier: 'Main',
-                            position: 30,
+  @UI: { identification: [{ position: 30,
                             criticality: 'StatusCriticality',
                             criticalityRepresentation: #WITH_ICON }] }  
   Status;
@@ -70,23 +60,21 @@ annotate entity ZC_Request with
 
   @EndUserText.label: 'Priority'
   @UI: { lineItem: [{ position: 40 }],
-         identification: [{ qualifier: 'Main', 
-                            position: 40 }],
+         identification: [{ position: 40 }],
          textArrangement: #TEXT_ONLY,
          selectionField: [{ position: 40 }] }  
   Priority;
 
   @EndUserText.label: 'Deadline Date'
   @UI: { lineItem: [{ position: 50 }],
-         identification: [{ qualifier: 'Main', 
-                            position: 50 }] }  
+         identification: [{ position: 50 }] }  
   DeadlineDate;
 
   @EndUserText.label: 'Cancellation Reason'
   @UI: { lineItem: [{ position: 60 }],
-         fieldGroup: [{ qualifier: 'Cancel', 
-                        position: 60 }] }
+         identification: [{ position: 60 }] }
   @UI.multiLineText: true
+  @UI.hidden: #( CancelReasonHidden )
   CancelReason;
 
   @EndUserText.label: 'Last Changed At'

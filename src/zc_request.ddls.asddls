@@ -37,6 +37,8 @@ define root view entity ZC_Request
       _priority.PriorityText         as PriorityText,
       DeadlineDate,
       CancelReason,
+      @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_RAP_REQUEST_CALC_EXIT'
+      virtual CancelReasonHidden : abap_boolean,
       LastChangedAt,
 
       /* Associations */

@@ -10,10 +10,10 @@ authorization master ( instance )
 etag master LastChangedAt
 {
   create;
-  update;
+  update( features : instance );
   internal delete;
 
-  draft action Edit;
+  draft action ( features : instance ) Edit;
   draft action Activate;
   draft action Resume;
   draft action Discard;
@@ -25,20 +25,23 @@ etag master LastChangedAt
   validation check_deadline_date on save { field DeadlineDate; }
   determination set_priority on modify { field DeadlineDate; }
   determination set_initial_status on modify { create; }
-  action cancel_request parameter ZP_Popup;
+  action ( features : instance ) cancel_request parameter ZP_Popup;
 
   field ( readonly ) RequestUuid, ExternalId;
   field ( numbering : managed ) RequestUuid;
   field ( mandatory ) RequesterId, DeadlineDate;
   field ( features : instance ) Status;
+  field ( features : instance ) CancelReason;
 
   side effects {
     // This is for refreshing after Cancel Request action
     action cancel_Request affects $self;
 
+    // This is for refreshing the editability of Cancel Reason after status gets updated
+    field Status affects permissions ( field CancelReason );
   }
 
-  association _items { create; with draft; }
+  association _items { create ( features : instance ); with draft; }
 
   mapping for zrap_a_request corresponding
     {
