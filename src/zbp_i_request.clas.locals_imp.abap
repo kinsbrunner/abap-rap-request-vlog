@@ -19,6 +19,8 @@ CLASS lhc_Request DEFINITION INHERITING FROM cl_abap_behavior_handler.
       IMPORTING keys REQUEST requested_features FOR request RESULT result.
     METHODS cancel_request FOR MODIFY
       IMPORTING keys FOR ACTION request~cancel_request.
+    METHODS add_item FOR MODIFY
+      IMPORTING keys FOR ACTION request~add_item.
 
 ENDCLASS.
 
@@ -221,7 +223,11 @@ CLASS lhc_Request IMPLEMENTATION.
                       " This is for disabling the Cancel custom action, for the already cancelled requests
                       %action-cancel_request = COND #( WHEN ls_request-Status = 103
                                                        THEN if_abap_behv=>fc-o-disabled
-                                                       ELSE if_abap_behv=>fc-o-enabled )  ) TO result.
+                                                       ELSE if_abap_behv=>fc-o-enabled )
+                      " This is for disabling the Add Quick Product when the BO is under draft mode and not active, or Cancelled
+                      %action-add_item = COND #( WHEN ls_request-%is_draft = '01' OR ls_request-Status = '103'
+                                                 THEN if_abap_behv=>fc-o-disabled
+                                                 ELSE if_abap_behv=>fc-o-enabled ) ) TO result.
     ENDLOOP.
   ENDMETHOD.
 
@@ -241,6 +247,23 @@ CLASS lhc_Request IMPLEMENTATION.
                       Status = '103'
                       CancelReason = keys[ RequestUuid = ls_request-RequestUuid ]-%param-cancel_reason ) )
       REPORTED DATA(ls_result).
+  ENDMETHOD.
+
+  METHOD add_item.
+    MODIFY ENTITIES OF ZI_Request IN LOCAL MODE
+      ENTITY Request
+      CREATE BY \_items
+      FROM VALUE #( FOR ls_key IN keys INDEX INTO lv_idx
+                    ( %tky = ls_key-%tky
+                      %target = VALUE #( ( %cid       = |NEW_ITEM_{ lv_idx }|
+                                           ProductId  = ls_key-%param-ProductId
+                                           ProductQty = ls_key-%param-ProductAmount
+                                           ProductUom = ls_key-%param-ProductUom
+                                           %control   = VALUE #( ProductId  = if_abap_behv=>mk-on
+                                                                 ProductQty = if_abap_behv=>mk-on
+                                                                 ProductUom = if_abap_behv=>mk-on ) ) ) ) )
+      FAILED DATA(lt_failed)
+      REPORTED DATA(lt_reported).
   ENDMETHOD.
 
 ENDCLASS.

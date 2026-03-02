@@ -26,6 +26,7 @@ etag master LastChangedAt
   determination set_priority on modify { field DeadlineDate; }
   determination set_initial_status on modify { create; }
   action ( features : instance ) cancel_request parameter ZP_Popup;
+  action ( features : instance ) add_item parameter ZP_PopupItem;
 
   field ( readonly ) RequestUuid, ExternalId;
   field ( numbering : managed ) RequestUuid;
@@ -39,6 +40,9 @@ etag master LastChangedAt
 
     // This is for refreshing the editability of Cancel Reason after status gets updated
     field Status affects permissions ( field CancelReason );
+
+    // This is for refreshing after Quick Add Product action
+    action add_item affects $self;
   }
 
   association _items { create ( features : instance ); with draft; }
