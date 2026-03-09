@@ -1,3 +1,46 @@
+CLASS cx_invalid_product DEFINITION
+  INHERITING FROM cx_static_check
+  FINAL.
+  PUBLIC SECTION.
+    DATA product_id TYPE matnr.
+    METHODS constructor
+      IMPORTING
+        product_id TYPE matnr.
+ENDCLASS.
+
+CLASS cx_invalid_product IMPLEMENTATION.
+  METHOD constructor.
+    super->constructor( ).
+    me->product_id = product_id.
+  ENDMETHOD.
+ENDCLASS.
+
+CLASS lcl_request_validation DEFINITION FINAL.
+  PUBLIC SECTION.
+    CLASS-METHODS get_product
+      IMPORTING iv_product        TYPE matnr
+      RETURNING VALUE(rs_product) TYPE zrap_c_products
+      RAISING   cx_invalid_product.
+ENDCLASS.
+
+CLASS lcl_request_validation IMPLEMENTATION.
+  METHOD get_product.
+
+    SELECT SINGLE
+      FROM zrap_c_products
+      FIELDS *
+      WHERE product = @iv_product
+      INTO @rs_product.
+
+    IF sy-subrc <> 0.
+      RAISE EXCEPTION TYPE cx_invalid_product
+        EXPORTING
+          product_id = iv_product.
+    ENDIF.
+
+  ENDMETHOD.
+ENDCLASS.
+
 CLASS lhc_Request DEFINITION INHERITING FROM cl_abap_behavior_handler.
   PRIVATE SECTION.
 
@@ -21,6 +64,8 @@ CLASS lhc_Request DEFINITION INHERITING FROM cl_abap_behavior_handler.
       IMPORTING keys FOR ACTION request~cancel_request.
     METHODS add_item FOR MODIFY
       IMPORTING keys FOR ACTION request~add_item.
+    METHODS precheck_cba_items FOR PRECHECK
+      IMPORTING entities FOR CREATE request\_items.
 
 ENDCLASS.
 
@@ -250,6 +295,34 @@ CLASS lhc_Request IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD add_item.
+    LOOP AT keys ASSIGNING FIELD-SYMBOL(<ls_key>).
+      DATA(lv_product) = CONV matnr( |{ <ls_key>-%param-ProductId ALPHA = IN }| ).
+
+      TRY.
+          " Central lookup + availability check
+          DATA(ls_product) = lcl_request_validation=>get_product( iv_product = lv_product ).
+
+          " Exists but not available
+          IF ls_product-is_available = abap_false.
+            APPEND VALUE #( %tky = <ls_key>-%tky ) TO failed-request.
+            APPEND VALUE #( %tky = <ls_key>-%tky
+                            %msg = new_message( id       = 'ZMSG_REQUEST'
+                                                number   = '005'
+                                                severity = if_abap_behv_message=>severity-error
+                                                v1       = |{ lv_product ALPHA = OUT }| ) ) TO reported-request.
+          ENDIF.
+
+        CATCH cx_invalid_product INTO DATA(lx).
+          " Product does not exist in config table
+          APPEND VALUE #( %tky = <ls_key>-%tky ) TO failed-request.
+          APPEND VALUE #( %tky = <ls_key>-%tky
+                          %msg = new_message( id       = 'ZMSG_REQUEST'
+                                              number   = '004'
+                                              severity = if_abap_behv_message=>severity-error
+                                              v1       = |{ lv_product ALPHA = OUT }| ) ) TO reported-request.
+      ENDTRY.
+    ENDLOOP.
+
     MODIFY ENTITIES OF ZI_Request IN LOCAL MODE
       ENTITY Request
       CREATE BY \_items
@@ -264,6 +337,60 @@ CLASS lhc_Request IMPLEMENTATION.
                                                                  ProductUom = if_abap_behv=>mk-on ) ) ) ) )
       FAILED DATA(lt_failed)
       REPORTED DATA(lt_reported).
+  ENDMETHOD.
+
+  METHOD precheck_cba_Items.
+    " Not needed for our educational scenario as system creates an empty entity and then,
+    "  it just uses the UPDATE so precheck should only go there!
+  ENDMETHOD.
+
+ENDCLASS.
+
+CLASS lhc_requestitem DEFINITION INHERITING FROM cl_abap_behavior_handler.
+
+  PRIVATE SECTION.
+
+    METHODS precheck_update FOR PRECHECK
+      IMPORTING entities FOR UPDATE RequestItem.
+
+ENDCLASS.
+
+CLASS lhc_requestitem IMPLEMENTATION.
+
+  METHOD precheck_update.
+    " Unless called through consumer using EML, not expecting to get multiple entries
+    LOOP AT entities ASSIGNING FIELD-SYMBOL(<ls_entity>).
+
+      " Skip cases where ProductId was not touched
+      IF <ls_entity>-%control-ProductId = if_abap_behv=>mk-off.
+        CONTINUE.
+      ENDIF.
+
+      TRY.
+          " Central check (lookup + availability)
+          DATA(ls_product) = lcl_request_validation=>get_product( iv_product = CONV matnr( |{ <ls_entity>-ProductId ALPHA = IN }| ) ).
+
+          " Is product available in the config table?
+          IF ls_product-is_available EQ abap_false.
+            APPEND VALUE #( %cid = <ls_entity>-%cid_ref ) TO failed-requestitem.
+            APPEND VALUE #( %cid = <ls_entity>-%cid_ref
+                            %msg = new_message( id       = 'ZMSG_REQUEST'
+                                                number   = '005'
+                                                severity = if_abap_behv_message=>severity-error
+                                                v1       = |{ <ls_entity>-ProductId ALPHA = OUT }| ) ) TO reported-requestitem.
+          ENDIF.
+
+        CATCH cx_invalid_product INTO DATA(lx).
+          " Product does not exist
+          APPEND VALUE #( %cid = <ls_entity>-%cid_ref ) TO failed-requestitem.
+          APPEND VALUE #( %cid = <ls_entity>-%cid_ref
+                          %msg = new_message( id       = 'ZMSG_REQUEST'
+                                              number   = '004'
+                                              severity = if_abap_behv_message=>severity-error
+                                              v1       = |{ <ls_entity>-ProductId ALPHA = OUT }| ) ) TO reported-requestitem.
+
+      ENDTRY.
+    ENDLOOP.
   ENDMETHOD.
 
 ENDCLASS.

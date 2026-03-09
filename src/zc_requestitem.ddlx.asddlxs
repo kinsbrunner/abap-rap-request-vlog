@@ -1,6 +1,17 @@
 @Metadata.layer: #CORE
+
+@UI: { headerInfo: { typeName: 'Request Item',
+                     title: { type: #STANDARD,
+                              label : 'The Item' } } }
+                              
 annotate entity ZC_RequestItem with
 {
+  @UI.facet: [{ id: 'Item',
+                purpose: #STANDARD,
+                type: #IDENTIFICATION_REFERENCE,
+                label: 'Request Item',
+                position: 10 }]
+              
   @UI.hidden: true
   RequestUuid;
 

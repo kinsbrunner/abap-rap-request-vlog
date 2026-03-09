@@ -7,8 +7,13 @@ define view entity ZC_RequestItem
 {
   key RequestUuid,
   key ItemUuid,
+      @Consumption.valueHelpDefinition: [{ entity: { name: 'ZI_Product_VH',
+                                                     element: 'ProductId' } }]
       ProductId,
       ProductQty,
+      
+      @Consumption.valueHelpDefinition: [{ entity: { name: 'I_UnitOfMeasureStdVH',
+                                                     element: 'UnitOfMeasure' } }]
       ProductUom,
       LastChangedAt,
 

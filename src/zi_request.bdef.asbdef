@@ -45,7 +45,7 @@ etag master LastChangedAt
     action add_item affects $self;
   }
 
-  association _items { create ( features : instance ); with draft; }
+  association _items { create ( features : instance, precheck ); with draft; }
 
   mapping for zrap_a_request corresponding
     {
@@ -70,7 +70,7 @@ lock dependent by _Request
 authorization dependent by _Request
 etag master LastChangedAt
 {
-  update;
+  update ( precheck );
   delete;
   association _Request { with draft; }
 
