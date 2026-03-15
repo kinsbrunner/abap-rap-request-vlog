@@ -44,6 +44,18 @@
      <MSGNR>005</MSGNR>
      <TEXT>Product &amp;1 is no longer allowed.</TEXT>
     </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMSG_REQUEST</ARBGB>
+     <MSGNR>006</MSGNR>
+     <TEXT>Only one item can have product ID &amp;1.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMSG_REQUEST</ARBGB>
+     <MSGNR>007</MSGNR>
+     <TEXT>Field &amp;1 cannot be empty for this item.</TEXT>
+    </T100>
    </T100>
   </asx:values>
  </asx:abap>

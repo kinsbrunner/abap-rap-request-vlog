@@ -352,6 +352,10 @@ CLASS lhc_requestitem DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
     METHODS precheck_update FOR PRECHECK
       IMPORTING entities FOR UPDATE RequestItem.
+    METHODS checl_unique_product FOR VALIDATE ON SAVE
+      IMPORTING keys FOR RequestItem~checl_unique_product.
+    METHODS check_item_mandatory_fields FOR VALIDATE ON SAVE
+      IMPORTING keys FOR RequestItem~check_item_mandatory_fields.
 
 ENDCLASS.
 
@@ -390,6 +394,88 @@ CLASS lhc_requestitem IMPLEMENTATION.
                                               v1       = |{ <ls_entity>-ProductId ALPHA = OUT }| ) ) TO reported-requestitem.
 
       ENDTRY.
+    ENDLOOP.
+  ENDMETHOD.
+
+  METHOD checl_unique_product.
+    TYPES: BEGIN OF ty_seen,
+             request_uuid TYPE sysuuid_x16,
+             product_id   TYPE matnr,
+           END OF ty_seen.
+
+    DATA lt_seen TYPE SORTED TABLE OF ty_seen
+                        WITH UNIQUE KEY request_uuid product_id.
+
+
+    READ ENTITIES OF ZI_Request IN LOCAL MODE
+      ENTITY Request BY \_items
+      ALL FIELDS
+      WITH CORRESPONDING #( keys )
+      RESULT DATA(lt_items).
+
+    LOOP AT lt_items ASSIGNING FIELD-SYMBOL(<ls_item>).
+      INSERT VALUE ty_seen( request_uuid = <ls_item>-RequestUuid
+                            product_id   = <ls_item>-ProductId ) INTO TABLE lt_seen.
+
+      IF sy-subrc NE 0.
+        "It means there is a duplicate
+        APPEND VALUE #( %tky = <ls_item>-%tky ) TO failed-requestitem.
+        APPEND VALUE #( %tky = <ls_item>-%tky
+                        %msg = new_message( id       = 'ZMSG_REQUEST'
+                                            number   = '006'
+                                            severity = if_abap_behv_message=>severity-error
+                                            v1       = |{ <ls_item>-ProductId ALPHA = OUT }| ) ) TO reported-requestitem.
+
+        CONTINUE.
+      ENDIF.
+    ENDLOOP.
+  ENDMETHOD.
+
+  METHOD check_item_mandatory_fields.
+    DATA permission_requesti TYPE STRUCTURE FOR PERMISSIONS REQUEST ZI_RequestItem.
+    DATA reported_zi_requesti_li LIKE LINE OF reported-requestitem.
+
+    DATA(description_permission_request) = CAST cl_abap_structdescr( cl_abap_typedescr=>describe_by_data_ref( REF #( permission_requesti-%field ) ) ).
+    DATA(components_permission_requesti) = description_permission_request->get_components( ).
+
+    LOOP AT components_permission_requesti INTO DATA(component_permission_requesti).
+      permission_requesti-%field-(component_permission_requesti-name) = if_abap_behv=>mk-on.
+    ENDLOOP.
+
+    " Get current field values
+    READ ENTITIES OF ZI_Request IN LOCAL MODE
+    ENTITY RequestItem
+      ALL FIELDS
+      WITH CORRESPONDING #( keys )
+      RESULT DATA(lt_item).
+
+    LOOP AT lt_item INTO DATA(ls_item).
+
+      GET PERMISSIONS ONLY INSTANCE FEATURES ENTITY ZI_RequestItem
+        FROM VALUE #( ( RequestUuid = ls_item-RequestUuid ) )
+        REQUEST permission_requesti
+        RESULT DATA(permission_result)
+        FAILED DATA(failed_permission_result)
+        REPORTED DATA(reported_permission_result).
+
+      LOOP AT components_permission_requesti INTO component_permission_requesti.
+
+        IF permission_result-global-%field-(component_permission_requesti-name) = if_abap_behv=>fc-f-mandatory AND
+           ls_item-(component_permission_requesti-name) IS INITIAL.
+
+          APPEND VALUE #( %tky = ls_item-%tky ) TO failed-requestitem.
+
+          CLEAR reported_zi_requesti_li.
+          reported_zi_requesti_li-%tky = ls_item-%tky.
+          reported_zi_requesti_li-%element-(component_permission_requesti-name) = if_abap_behv=>mk-on.
+          reported_zi_requesti_li-%msg = new_message( id = 'ZMSG_REQUEST'
+                                                         number = 007
+                                                         severity = if_abap_behv_message=>severity-error
+                                                         v1 = |{ component_permission_requesti-name }| ).
+
+          APPEND reported_zi_requesti_li TO reported-requestitem.
+        ENDIF.
+      ENDLOOP.
     ENDLOOP.
   ENDMETHOD.
 
