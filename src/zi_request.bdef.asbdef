@@ -80,6 +80,7 @@ etag master LastChangedAt
 
   validation checl_unique_product on save { field ProductId; create; update; }
   validation check_item_mandatory_fields on save { create; update; }
+  determination normalize_product_id on modify { field ProductId; }
 
   mapping for zrap_a_reqitem corresponding
     {

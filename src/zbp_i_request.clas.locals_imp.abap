@@ -254,23 +254,23 @@ CLASS lhc_Request IMPLEMENTATION.
                                                     THEN if_abap_behv=>fc-f-mandatory
                                                     ELSE if_abap_behv=>fc-f-unrestricted )
                       " This is for disabling the edit of header fields, for a cancelled request
-                      %update   = COND #( WHEN ls_request-Status = 103
+                      %update   = COND #( WHEN ls_request-Status = 103 OR ls_request-Status = 102
                                           THEN if_abap_behv=>fc-o-disabled
                                           ELSE if_abap_behv=>fc-o-enabled )
                       " This is for disabling the Create button of the children
-                      %assoc-_items       = COND #( WHEN ls_request-Status = 103
+                      %assoc-_items       = COND #( WHEN ls_request-Status = 103 OR ls_request-Status = 102
                                                     THEN if_abap_behv=>fc-o-disabled
                                                     ELSE if_abap_behv=>fc-o-enabled )
                       " This is for disabling the draft Edit button
-                      %action-Edit = COND #( WHEN ls_request-Status = 103
+                      %action-Edit = COND #( WHEN ls_request-Status = 103 OR ls_request-Status = 102
                                              THEN if_abap_behv=>fc-o-disabled
                                              ELSE if_abap_behv=>fc-o-enabled )
                       " This is for disabling the Cancel custom action, for the already cancelled requests
-                      %action-cancel_request = COND #( WHEN ls_request-Status = 103
+                      %action-cancel_request = COND #( WHEN ls_request-Status = 103 OR ls_request-Status = 102
                                                        THEN if_abap_behv=>fc-o-disabled
                                                        ELSE if_abap_behv=>fc-o-enabled )
                       " This is for disabling the Add Quick Product when the BO is under draft mode and not active, or Cancelled
-                      %action-add_item = COND #( WHEN ls_request-%is_draft = '01' OR ls_request-Status = '103'
+                      %action-add_item = COND #( WHEN ls_request-%is_draft = '01' OR ls_request-Status = 103 OR ls_request-Status = 102
                                                  THEN if_abap_behv=>fc-o-disabled
                                                  ELSE if_abap_behv=>fc-o-enabled ) ) TO result.
     ENDLOOP.
@@ -356,6 +356,8 @@ CLASS lhc_requestitem DEFINITION INHERITING FROM cl_abap_behavior_handler.
       IMPORTING keys FOR RequestItem~checl_unique_product.
     METHODS check_item_mandatory_fields FOR VALIDATE ON SAVE
       IMPORTING keys FOR RequestItem~check_item_mandatory_fields.
+    METHODS normalize_product_id FOR DETERMINE ON MODIFY
+      IMPORTING keys FOR RequestItem~normalize_product_id.
 
 ENDCLASS.
 
@@ -477,6 +479,32 @@ CLASS lhc_requestitem IMPLEMENTATION.
         ENDIF.
       ENDLOOP.
     ENDLOOP.
+  ENDMETHOD.
+
+  METHOD normalize_product_id.
+    READ ENTITIES OF ZI_Request IN LOCAL MODE
+      ENTITY RequestItem
+      FIELDS ( ProductId )
+      WITH CORRESPONDING #( keys )
+      RESULT DATA(lt_items).
+
+    DATA lt_upd TYPE TABLE FOR UPDATE zi_requestitem.
+
+    LOOP AT lt_items ASSIGNING FIELD-SYMBOL(<item>).
+      DATA(lv_product) = CONV matnr( |{ <item>-ProductId ALPHA = IN }| ).
+
+      IF lv_product <> <item>-ProductId.
+        APPEND VALUE #( %tky      = <item>-%tky
+                        ProductId = lv_product ) TO lt_upd.
+      ENDIF.
+    ENDLOOP.
+
+    IF lt_upd IS NOT INITIAL.
+      MODIFY ENTITIES OF ZI_Request IN LOCAL MODE
+        ENTITY RequestItem
+        UPDATE FIELDS ( ProductId )
+        WITH lt_upd.
+    ENDIF.
   ENDMETHOD.
 
 ENDCLASS.

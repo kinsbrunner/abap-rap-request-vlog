@@ -36,8 +36,7 @@ annotate entity ZC_Request with
   RequestUuid;
 
   @EndUserText.label: 'External ID'
-  @UI: { lineItem: [{ position: 10 }],
-         identification: [{ position: 10 }] }  
+  @UI: { lineItem: [{ position: 10 }] }  
   ExternalId;
 
   @EndUserText.label: 'Requester ID'

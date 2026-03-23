@@ -9,7 +9,9 @@ define view entity ZC_RequestItem
   key ItemUuid,
       @Consumption.valueHelpDefinition: [{ entity: { name: 'ZI_Product_VH',
                                                      element: 'ProductId' } }]
+      @ObjectModel.text.element: [ 'Description' ]
       ProductId,
+      Description,
       ProductQty,
       
       @Consumption.valueHelpDefinition: [{ entity: { name: 'I_UnitOfMeasureStdVH',

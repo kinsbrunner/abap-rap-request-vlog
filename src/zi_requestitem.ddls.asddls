@@ -2,23 +2,26 @@
 @EndUserText.label: 'Request item interface view'
 @Metadata.ignorePropagatedAnnotations: true
 define view entity ZI_RequestItem
-  as select from ZRAP_A_REQITEM
+  as select from zrap_a_reqitem as item
+     inner join zrap_c_products as prod on prod.product = item.product_id
+     
   association to parent ZI_Request as _Request on $projection.RequestUuid = _Request.RequestUuid
 {
-  key request_uuid    as RequestUuid,
-  key item_uuid       as ItemUuid,
-      product_id      as ProductId,
+  key item.request_uuid    as RequestUuid,
+  key item.item_uuid       as ItemUuid,
+      item.product_id      as ProductId,
+      prod.description     as Description,
       @Semantics.quantity.unitOfMeasure: 'ProductUom'
-      product_qty     as ProductQty,
-      product_uom     as ProductUom,
+      item.product_qty     as ProductQty,
+      item.product_uom     as ProductUom,
       @Semantics.user.createdBy: true
-      created_by      as CreatedBy,
+      item.created_by      as CreatedBy,
       @Semantics.systemDateTime.createdAt: true
-      created_at      as CreatedAt,
+      item.created_at      as CreatedAt,
       @Semantics.user.lastChangedBy: true
-      last_changed_by as LastChangedBy,
+      item.last_changed_by as LastChangedBy,
       @Semantics.systemDateTime.lastChangedAt: true
-      last_changed_at as LastChangedAt,
+      item.last_changed_at as LastChangedAt,
       
       //Associations
       _Request

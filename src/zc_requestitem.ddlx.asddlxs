@@ -20,7 +20,8 @@ annotate entity ZC_RequestItem with
   
   @EndUserText.label: 'Product ID'
   @UI: { lineItem: [{ position: 10 }],
-         identification: [{ position: 10 }] }
+         identification: [{ position: 10 }],
+         textArrangement: #TEXT_FIRST }
   ProductId;
   
   @EndUserText.label: 'Amount'
